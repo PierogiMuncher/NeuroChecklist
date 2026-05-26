@@ -10,6 +10,20 @@ const STRENGTH_GRADES = ["0", "1", "2", "3", "4", "5", "deferred"];
 const REFLEX_GRADES = ["0", "1+", "2+", "3+", "4+", "deferred"];
 const PLANTAR_CHOICES = ["downgoing", "upgoing", "mute", "deferred"];
 const CLONUS_CHOICES = ["absent", "present", "deferred"];
+const HYPERREFLEXIA_CHOICES = ["absent", "present", "deferred"];
+const ROMBERG_CHOICES = ["negative", "positive", "deferred"];
+const GAIT_CHOICES = [
+  { value: "normal", label: "Normal", summary: "gait is steady with normal base" },
+  { value: "wide_based", label: "Wide-based", summary: "wide-based gait" },
+  { value: "ataxic", label: "Ataxic", summary: "ataxic gait" },
+  { value: "spastic", label: "Spastic", summary: "spastic gait" },
+  { value: "hemiparetic", label: "Hemiparetic", summary: "hemiparetic gait" },
+  { value: "steppage", label: "Steppage", summary: "steppage gait" },
+  { value: "parkinsonian", label: "Parkinsonian", summary: "parkinsonian gait" },
+  { value: "antalgic", label: "Antalgic", summary: "antalgic gait" },
+  { value: "astasia_abasia", label: "Astasia-abasia", summary: "astasia-abasia gait pattern" },
+  { value: "deferred", label: "Deferred", summary: "gait testing deferred" }
+];
 
 function item(id, label, normal, abnormal, deferred, defaultStatus = "normal") {
   return { id, label, normal, abnormal, deferred, defaultStatus };
@@ -169,6 +183,13 @@ const steps = [
       item("heel_shin", "Heel-to-Shin", "no dysmetria on heel-to-shin testing", "dysmetria on heel-to-shin testing", "heel-to-shin testing deferred"),
       item("ram", "Rapid Alternating Movements", "rapid alternating movements intact", "dysdiadochokinesia", "rapid alternating movements deferred")
     ]
+  },
+  {
+    id: "gait",
+    section: "Gait",
+    title: "Gait / Romberg",
+    type: "gait",
+    deferredSummary: "Gait and Romberg testing deferred."
   },
   {
     id: "umn",
