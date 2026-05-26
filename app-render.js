@@ -49,6 +49,7 @@ function renderSections(activeSection) {
 function renderStepBody(step) {
   if (step.type === "strength") return renderStrengthStep(step);
   if (step.type === "reflexes") return renderReflexesStep(step);
+  if (step.type === "gait") return renderGaitStep(step);
   return renderGenericStep(step);
 }
 
@@ -153,11 +154,21 @@ function renderReflexesStep(step) {
               <span class="metric-meta">${escapeHtml(group.root)}</span>
             </div>
           </div>
-          ${renderReflexSide(group, "right", reflex.right)}
-          ${renderReflexSide(group, "left", reflex.left)}
+          ${renderReflexSide(group, "right", reflex)}
+          ${renderReflexSide(group, "left", reflex)}
         </div>
       `;
     }).join("")}
+    <div class="reflex-group">
+      <div class="metric-head">
+        <div>
+          <span class="field-label">Hyperreflexia Features</span>
+          <span class="metric-meta">Spread / crossed adduction</span>
+        </div>
+      </div>
+      ${renderHyperreflexiaChoice("spread", "Reflex Spread", stepState.hyperreflexia.spread)}
+      ${renderHyperreflexiaChoice("crossed", "Crossed Adductor", stepState.hyperreflexia.crossed)}
+    </div>
     <div class="reflex-group">
       <div class="metric-head">
         <div>
@@ -188,7 +199,9 @@ function renderReflexesStep(step) {
   `;
 }
 
-function renderReflexSide(group, side, selected) {
+function renderReflexSide(group, side, reflex) {
+  const selected = reflex[side];
+  const beats = reflex.clonusBeats?.[side] || "";
   return `
     <div class="reflex-side">
       <span class="side-label">${side}</span>
@@ -203,6 +216,47 @@ function renderReflexSide(group, side, selected) {
               data-value="${grade}"
               aria-pressed="${selected === grade}"
             >${grade === "deferred" ? "D" : grade}</button>
+          `
+        ).join("")}
+      </div>
+      ${
+        selected === "4+"
+          ? `<label class="inline-field">
+              <span class="inline-label">Clonus beats</span>
+              <input
+                class="compact-input"
+                type="number"
+                min="0"
+                inputmode="numeric"
+                data-role="note"
+                data-scope="reflex-clonus"
+                data-step="reflexes"
+                data-group="${escapeAttr(group.id)}"
+                data-side="${escapeAttr(side)}"
+                value="${escapeAttr(beats)}"
+                placeholder="count"
+              />
+            </label>`
+          : ""
+      }
+    </div>
+  `;
+}
+
+function renderHyperreflexiaChoice(kind, label, selected) {
+  return `
+    <div class="reflex-side">
+      <span class="side-label">${escapeHtml(label)}</span>
+      <div class="choice-buttons">
+        ${HYPERREFLEXIA_CHOICES.map(
+          (choice) => `
+            <button
+              class="grade-button ${selected === choice ? "is-active" : ""}"
+              data-action="set-hyperreflexia"
+              data-kind="${escapeAttr(kind)}"
+              data-value="${choice}"
+              aria-pressed="${selected === choice}"
+            >${choice === "deferred" ? "Deferred" : capitalize(choice)}</button>
           `
         ).join("")}
       </div>
@@ -231,6 +285,61 @@ function renderChoiceSide(kind, side, selected, choices) {
   `;
 }
 
+function renderGaitStep(step) {
+  const stepState = getStepState(step.id);
+  const gaitChoice = GAIT_CHOICES.find((choice) => choice.value === stepState.gait) || GAIT_CHOICES[0];
+  return `
+    <div class="metric-row">
+      <div class="metric-head">
+        <div>
+          <span class="field-label">Gait Pattern</span>
+          <span class="metric-meta">${escapeHtml(gaitChoice.summary)}</span>
+        </div>
+        <span class="status-pill ${stepState.gait === "normal" ? "normal" : stepState.gait === "deferred" ? "deferred" : "abnormal"}">
+          ${escapeHtml(gaitChoice.label)}
+        </span>
+      </div>
+      <select class="select-input" data-role="gait-select" aria-label="Gait pattern">
+        ${GAIT_CHOICES.map(
+          (choice) => `
+            <option value="${escapeAttr(choice.value)}" ${stepState.gait === choice.value ? "selected" : ""}>
+              ${escapeHtml(choice.label)}
+            </option>
+          `
+        ).join("")}
+      </select>
+      ${
+        stepState.gait !== "normal" && stepState.gait !== "deferred"
+          ? `<textarea class="note-input" data-role="note" data-scope="gait-note" data-step="${escapeAttr(step.id)}" placeholder="Gait details">${escapeHtml(stepState.note || "")}</textarea>`
+          : ""
+      }
+    </div>
+    <div class="metric-row">
+      <div class="metric-head">
+        <div>
+          <span class="field-label">Romberg</span>
+          <span class="metric-meta">Station with eyes closed</span>
+        </div>
+        <span class="status-pill ${stepState.romberg === "negative" ? "normal" : stepState.romberg === "deferred" ? "deferred" : "abnormal"}">
+          ${capitalize(stepState.romberg)}
+        </span>
+      </div>
+      <div class="choice-buttons">
+        ${ROMBERG_CHOICES.map(
+          (choice) => `
+            <button
+              class="grade-button ${stepState.romberg === choice ? "is-active" : ""}"
+              data-action="set-romberg"
+              data-value="${choice}"
+              aria-pressed="${stepState.romberg === choice}"
+            >${choice === "deferred" ? "Deferred" : capitalize(choice)}</button>
+          `
+        ).join("")}
+      </div>
+    </div>
+  `;
+}
+
 function markStepDeferred(step) {
   const stepState = getStepState(step.id);
   stepState.skipped = true;
@@ -246,6 +355,12 @@ function markStepDeferred(step) {
     stepState.plantar.right = "deferred";
     stepState.plantar.left = "deferred";
     stepState.clonus = "deferred";
+    stepState.hyperreflexia.spread = "deferred";
+    stepState.hyperreflexia.crossed = "deferred";
+  } else if (step.type === "gait") {
+    stepState.gait = "deferred";
+    stepState.romberg = "deferred";
+    stepState.note = "";
   } else {
     for (const finding of step.items) {
       stepState.items[finding.id].status = "deferred";
