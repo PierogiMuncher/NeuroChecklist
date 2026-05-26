@@ -33,7 +33,11 @@ app.addEventListener("click", (event) => {
   if (action === "set-reflex") {
     const stepState = getStepState("reflexes");
     stepState.skipped = false;
-    stepState.dtrs[target.dataset.group][target.dataset.side] = target.dataset.value;
+    const reflex = stepState.dtrs[target.dataset.group];
+    reflex[target.dataset.side] = target.dataset.value;
+    if (target.dataset.value !== "4+") {
+      reflex.clonusBeats[target.dataset.side] = "";
+    }
     render();
   }
 
@@ -48,6 +52,20 @@ app.addEventListener("click", (event) => {
     const stepState = getStepState("reflexes");
     stepState.skipped = false;
     stepState.clonus = target.dataset.value;
+    render();
+  }
+
+  if (action === "set-hyperreflexia") {
+    const stepState = getStepState("reflexes");
+    stepState.skipped = false;
+    stepState.hyperreflexia[target.dataset.kind] = target.dataset.value;
+    render();
+  }
+
+  if (action === "set-romberg") {
+    const stepState = getStepState("gait");
+    stepState.skipped = false;
+    stepState.romberg = target.dataset.value;
     render();
   }
 
@@ -102,11 +120,28 @@ app.addEventListener("input", (event) => {
 
   if (target.dataset.scope === "child") {
     stepState.children[target.dataset.item].note = target.value;
+  } else if (target.dataset.scope === "reflex-clonus") {
+    stepState.dtrs[target.dataset.group].clonusBeats[target.dataset.side] = target.value;
   } else if (target.dataset.scope === "strength") {
     stepState.limbs[target.dataset.limb].note = target.value;
+  } else if (target.dataset.scope === "gait-note") {
+    stepState.note = target.value;
   } else {
     stepState.items[target.dataset.item].note = target.value;
   }
 
   saveState();
+});
+
+app.addEventListener("change", (event) => {
+  const target = event.target;
+  if (!target.matches("[data-role='gait-select']")) return;
+
+  const stepState = getStepState("gait");
+  stepState.skipped = false;
+  stepState.gait = target.value;
+  if (target.value === "normal" || target.value === "deferred") {
+    stepState.note = "";
+  }
+  render();
 });
