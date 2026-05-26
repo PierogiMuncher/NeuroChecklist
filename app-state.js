@@ -13,10 +13,24 @@ function createInitialState() {
       findings[step.id] = {
         skipped: false,
         dtrs: Object.fromEntries(
-          REFLEX_GROUPS.map((group) => [group.id, { right: "2+", left: "2+" }])
+          REFLEX_GROUPS.map((group) => [
+            group.id,
+            { right: "2+", left: "2+", clonusBeats: { right: "", left: "" } }
+          ])
         ),
         plantar: { right: "downgoing", left: "downgoing" },
-        clonus: "absent"
+        clonus: "absent",
+        hyperreflexia: { spread: "absent", crossed: "absent" }
+      };
+      continue;
+    }
+
+    if (step.type === "gait") {
+      findings[step.id] = {
+        skipped: false,
+        gait: "normal",
+        romberg: "negative",
+        note: ""
       };
       continue;
     }
@@ -71,7 +85,11 @@ function mergeState(fresh, saved) {
       for (const group of REFLEX_GROUPS) {
         fresh.findings[step.id].dtrs[group.id] = {
           ...fresh.findings[step.id].dtrs[group.id],
-          ...savedStep.dtrs?.[group.id]
+          ...savedStep.dtrs?.[group.id],
+          clonusBeats: {
+            ...fresh.findings[step.id].dtrs[group.id].clonusBeats,
+            ...savedStep.dtrs?.[group.id]?.clonusBeats
+          }
         };
       }
       fresh.findings[step.id].plantar = {
@@ -79,6 +97,15 @@ function mergeState(fresh, saved) {
         ...savedStep.plantar
       };
       fresh.findings[step.id].clonus = savedStep.clonus || fresh.findings[step.id].clonus;
+      fresh.findings[step.id].hyperreflexia = {
+        ...fresh.findings[step.id].hyperreflexia,
+        ...savedStep.hyperreflexia
+      };
+    } else if (step.type === "gait") {
+      fresh.findings[step.id] = {
+        ...fresh.findings[step.id],
+        ...savedStep
+      };
     } else {
       fresh.findings[step.id].skipped = Boolean(savedStep.skipped);
       for (const finding of step.items) {
