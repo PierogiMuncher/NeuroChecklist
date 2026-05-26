@@ -33,6 +33,7 @@ function summarizeStep(step) {
   if (stepState.skipped) return step.deferredSummary;
   if (step.type === "strength") return summarizeStrength(step, stepState);
   if (step.type === "reflexes") return summarizeReflexes(step, stepState);
+  if (step.type === "gait") return summarizeGait(step, stepState);
   return summarizeGeneric(step, stepState);
 }
 
@@ -77,25 +78,51 @@ function summarizeReflexes(step, stepState) {
     dtrs.every((value) => value === "deferred") &&
     stepState.plantar.right === "deferred" &&
     stepState.plantar.left === "deferred" &&
-    stepState.clonus === "deferred";
+    stepState.clonus === "deferred" &&
+    stepState.hyperreflexia.spread === "deferred" &&
+    stepState.hyperreflexia.crossed === "deferred";
   if (allDeferred) return step.deferredSummary;
 
   const allNormal =
     dtrs.every((value) => value === "2+") &&
     stepState.plantar.right === "downgoing" &&
     stepState.plantar.left === "downgoing" &&
-    stepState.clonus === "absent";
+    stepState.clonus === "absent" &&
+    stepState.hyperreflexia.spread === "absent" &&
+    stepState.hyperreflexia.crossed === "absent";
   if (allNormal) {
     return "Deep tendon reflexes are 2+ and symmetric in biceps, brachioradialis, triceps, patellar, and Achilles; plantar responses are downgoing bilaterally; no clonus.";
   }
 
   const reflexFragments = REFLEX_GROUPS.map((group) => {
     const reflex = stepState.dtrs[group.id];
-    return `${group.label} R ${reflex.right}, L ${reflex.left}`;
+    return `${group.label} ${summarizeReflexSide("R", reflex, "right")}, ${summarizeReflexSide("L", reflex, "left")}`;
   });
   const plantar = `plantar responses R ${stepState.plantar.right}, L ${stepState.plantar.left}`;
   const clonus = stepState.clonus === "deferred" ? "clonus deferred" : `${stepState.clonus === "absent" ? "no" : "positive"} clonus`;
-  return `Deep tendon reflexes: ${reflexFragments.join("; ")}; ${plantar}; ${clonus}.`;
+  const hyperreflexia = `reflex spread ${stepState.hyperreflexia.spread}; crossed adductor responses ${stepState.hyperreflexia.crossed}`;
+  return `Deep tendon reflexes: ${reflexFragments.join("; ")}; ${plantar}; ${clonus}; ${hyperreflexia}.`;
+}
+
+function summarizeReflexSide(label, reflex, side) {
+  const grade = reflex[side];
+  const beats = cleanNote(reflex.clonusBeats?.[side]);
+  if (grade === "4+" && beats) {
+    return `${label} ${grade} (${beats} ${beats === "1" ? "beat" : "beats"} clonus)`;
+  }
+  return `${label} ${grade}`;
+}
+
+function summarizeGait(step, stepState) {
+  if (stepState.gait === "deferred" && stepState.romberg === "deferred") return step.deferredSummary;
+  const gaitChoice = GAIT_CHOICES.find((choice) => choice.value === stepState.gait) || GAIT_CHOICES[0];
+  const note = cleanNote(stepState.note);
+  const gait = stepState.gait === "deferred" ? "gait testing deferred" : `${gaitChoice.summary}${note ? ` (${note})` : ""}`;
+  const romberg = stepState.romberg === "deferred" ? "Romberg testing deferred" : `Romberg ${stepState.romberg}`;
+  if (stepState.gait === "normal" && stepState.romberg === "negative") {
+    return "Gait is steady with normal base; Romberg negative.";
+  }
+  return `Gait and station: ${gait}; ${romberg}.`;
 }
 
 async function copySummary() {
