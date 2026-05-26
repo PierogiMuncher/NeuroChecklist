@@ -1,0 +1,22 @@
+{
+  "id": "./",
+  "name": "Neuro Physical Exam",
+  "short_name": "Neuro Exam",
+  "description": "Stepwise neurologic physical exam checklist with a copy-ready paragraph summary.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "fullscreen", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#090a0c",
+  "theme_color": "#090a0c",
+  "categories": ["medical", "productivity"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
