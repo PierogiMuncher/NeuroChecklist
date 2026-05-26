@@ -1,4 +1,4 @@
-const VERSION = "2026.05.26-offline.2";
+const VERSION = "2026.05.26-offline.3";
 const CACHE_NAME = `neuro-exam-${VERSION}`;
 const ASSETS = [
   "./",
